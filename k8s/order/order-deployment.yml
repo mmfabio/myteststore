@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order
+  namespace: myteststore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order
+  template:
+    metadata:
+      labels:
+        app: order
+    spec:
+      containers:
+        - name: order
+          image: myteststore/order:3.0.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SERVER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: order-config
+                  key: SERVER_PORT
+            - name: DATASOURCE_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: order-config
+                  key: DATASOURCE_USERNAME
+            - name: DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: order-secret-config
+                  key: password
+            - name: DATASOURCE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: order-config
+                  key: DATASOURCE_URL
+            - name: KAFKA_BOOTSTRAP_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: order-config
+                  key: KAFKA_BOOTSTRAP_SERVER
+            - name: KAFKA_PRODUCER_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: order-config
+                  key: KAFKA_PRODUCER_TOPIC
+            - name: KAFKA_CONSUMER_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: order-config
+                  key: KAFKA_CONSUMER_TOPIC
+            - name: KAFKA_CONSUMER_GROUPID
+              valueFrom:
+                configMapKeyRef:
+                  name: order-config
+                  key: KAFKA_CONSUMER_GROUPID
+          ports:
+            - containerPort: 8080

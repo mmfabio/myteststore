@@ -1,0 +1,126 @@
+services:
+
+  db:
+    container_name: postgres
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker_postgres_init.sql:/docker-entrypoint-initdb.d/docker_postgres_init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - myteststore-network
+
+  broker:
+    container_name: broker
+    image: apache/kafka:latest
+    hostname: broker
+    ports:
+      - 9092:9092
+    networks:
+      - myteststore-network
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://broker:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
+      KAFKA_LISTENERS: PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+
+  myteststore-fe:
+    container_name: myteststore-fe
+    build: ./angular-fe
+    image: myteststore/angular-fe:1.0.0
+    volumes:
+      - /home/fmm/Documents/myteststore:/usr/share/nginx/html/assets
+    ports:
+      - "80:80"
+    networks:
+      - myteststore-network
+
+  api-gateway:
+    container_name: api-gateway
+    build: ./api-gateway
+    image: myteststore/gateway:1.0.0
+    ports:
+      - "8080:8080"
+    networks:
+      - myteststore-network
+    environment:
+      URL_STORE: http://store:8081/store
+      URL_ORDER: http://order:8082/order
+
+  store:
+    container_name: store
+    build: ./store
+    image: myteststore/store:1.0.0
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+    networks:
+      - myteststore-network
+    environment:
+      SERVER_PORT: "8081"
+      DATASOURCE_USERNAME: store_usr
+      DATASOURCE_PASSWORD: User@Store!25
+      DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres?currentSchema=store
+
+  order:
+    container_name: order
+    build: ./order
+    image: myteststore/order:1.0.0
+    ports:
+      - "8082:8082"
+    depends_on:
+      - db
+      - broker
+    networks:
+      - myteststore-network
+    environment:
+      SERVER_PORT: "8082"
+      DATASOURCE_USERNAME: order_usr
+      DATASOURCE_PASSWORD: User@Order!25
+      DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres?currentSchema=order
+      KAFKA_BOOTSTRAP_SERVER: broker:9092
+      KAFKA_PRODUCER_TOPIC: myteststore.request.delivery
+      KAFKA_CONSUMER_TOPIC: myteststore.update.status
+      KAFKA_CONSUMER_GROUPID: myteststore-order-groupId
+
+  logistic:
+    container_name: logistic
+    build: ./logistic
+    image: myteststore/logistic:1.0.0
+    ports:
+      - "8083:8083"
+    depends_on:
+      - db
+      - broker
+    networks:
+      - myteststore-network
+    environment:
+      SERVER_PORT: "8083"
+      KAFKA_BOOTSTRAP_SERVER: broker:9092
+      KAFKA_PRODUCER_TOPIC: myteststore.update.status
+      KAFKA_CONSUMER_TOPIC: myteststore.request.delivery
+      KAFKA_CONSUMER_GROUPID: myteststore-logistic-groupId
+
+volumes:
+  pgdata:
+networks:
+  myteststore-network:
+    driver: bridge
+    external: true

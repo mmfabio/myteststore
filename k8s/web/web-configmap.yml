@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-base-url-config
+  namespace: myteststore
+data:
+  config.json: |
+    {
+    "baseUrl": "http://127.0.0.1:35795/api/",
+    "item": "items",
+    "request": "requests"
+    }

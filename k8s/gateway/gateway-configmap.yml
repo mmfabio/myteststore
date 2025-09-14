@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-config
+  namespace: myteststore
+data:
+  URL_STORE: http://store:8080/store
+  URL_ORDER: http://order:8080/order

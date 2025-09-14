@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistic
+  namespace: myteststore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logistic
+  template:
+    metadata:
+      labels:
+        app: logistic
+    spec:
+      containers:
+        - name: logistic
+          image: myteststore/logistic:3.0.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SERVER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: logistic-config
+                  key: SERVER_PORT
+            - name: KAFKA_BOOTSTRAP_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: logistic-config
+                  key: KAFKA_BOOTSTRAP_SERVER
+            - name: KAFKA_PRODUCER_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: logistic-config
+                  key: KAFKA_PRODUCER_TOPIC
+            - name: KAFKA_CONSUMER_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: logistic-config
+                  key: KAFKA_CONSUMER_TOPIC
+            - name: KAFKA_CONSUMER_GROUPID
+              valueFrom:
+                configMapKeyRef:
+                  name: logistic-config
+                  key: KAFKA_CONSUMER_GROUPID
+          ports:
+            - containerPort: 8080

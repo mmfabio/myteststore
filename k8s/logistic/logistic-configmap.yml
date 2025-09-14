@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logistic-config
+  namespace: myteststore
+data:
+  SERVER_PORT: "8080"
+  KAFKA_BOOTSTRAP_SERVER: broker:9092
+  KAFKA_PRODUCER_TOPIC: myteststore.update.status
+  KAFKA_CONSUMER_TOPIC: myteststore.request.delivery
+  KAFKA_CONSUMER_GROUPID: myteststore-logistic-groupId

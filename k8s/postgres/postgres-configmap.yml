@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresql-initdb-config
+  namespace: myteststore
+data:
+  docker_postgres_init.sql: |
+    CREATE USER store_usr WITH PASSWORD 'User@Store!25';
+    CREATE SCHEMA IF NOT EXISTS store AUTHORIZATION store_usr;
+    CREATE USER order_usr WITH PASSWORD 'User@Order!25';
+    CREATE SCHEMA IF NOT EXISTS "order" AUTHORIZATION order_usr;
